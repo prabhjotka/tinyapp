@@ -9,7 +9,6 @@ function generateRandomString(length) {
 
   return result;
 }
-
 const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -41,12 +40,20 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortUrl}`);
 
 });
+// get property for to follow the  link whane user click on short url
 app.get("/u/:id", (req, res) => {
   const templateVars = {
     id: req.params.id, longURL:
       urlDatabase[req.params.id]
   };
   res.redirect(templateVars.longURL);
+});
+
+
+app.post('/urls/:id/delete', (req, res) => {
+
+  delete urlDatabase[req.params.id];
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => {
