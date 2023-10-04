@@ -22,9 +22,11 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
+//creating a newUrl page
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
+//showing a short url version for longUrl
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id, longURL:
@@ -32,6 +34,7 @@ app.get("/urls/:id", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
+//adding to urldatabase
 app.post("/urls", (req, res) => {
   const longURL1 = req.body.longURL;
   const shortUrl = generateRandomString(6);
@@ -40,7 +43,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortUrl}`);
 
 });
-// get property for to follow the  link whane user click on short url
+// get property for to follow the  link when user click on short url
 app.get("/u/:id", (req, res) => {
   const templateVars = {
     id: req.params.id, longURL:
@@ -49,11 +52,29 @@ app.get("/u/:id", (req, res) => {
   res.redirect(templateVars.longURL);
 });
 
-
+//delete the url
 app.post('/urls/:id/delete', (req, res) => {
 
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
+});
+//edit the url
+app.get("/urls", (req, res) => {
+  const templateVars = {
+    id: req.params.id, longURL:
+      urlDatabase[req.params.id]
+  };
+  res.render("urls_show", templateVars);
+});
+
+//submit new url
+app.post("/urls/:id", (req, res) => {
+
+  console.log(req.body);
+  urlDatabase[req.params.id] = req.body.newUrl;
+
+  res.redirect("/urls/");
+
 });
 
 app.listen(PORT, () => {

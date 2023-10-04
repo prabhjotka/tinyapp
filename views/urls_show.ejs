@@ -20,8 +20,15 @@
         <h5 class="card-title">TinyURL for: <%= longURL %></h5>
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
-        </p>
-      </div>
+        </p></div>
+        <div><h5 class="card-title">Edit</h5></div>
+       <div><lable for="newUrl">New Url</lable>
+        <form action="/urls/<%= id %>" method="POST">
+      
+          <input type="text" id="newUrl" name="newUrl" placeholder="https://"/> 
+          <button type="submit" style="background-color: blue;color:white">submit</button>
+        </form></div>
+      
       <div class="card-footer text-muted"></div>
     </div>
     <!-- Bootstrap JS -->
