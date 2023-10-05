@@ -126,11 +126,9 @@ app.get("/urls/:id", (req, res) => {
   };
   res.render("urls_show", templateVars);
 
-
 });
 
-
-// get property  to follow the  link when user click on short url
+// get  u:id// to follow the  link when user click on short url
 app.get("/u/:id", (req, res) => {
   const urlid = req.params.id;
   if (urlDatabase[urlid]) {
@@ -158,13 +156,11 @@ app.post('/urls/:id', (req, res) => {
 
 });
 
-
 //delete the url
 app.post('/urls/:id/delete', (req, res) => {
   const userId = req.session.user_id;
   if (!userId) {
     return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
-    //return res.redirect('/login');
   }
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
@@ -184,8 +180,6 @@ app.get("/urls/:id", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
-
-
 
 //get user registeration form info
 app.get('/register', (req, res) => {
@@ -242,7 +236,7 @@ app.get('/login', (req, res) => {
   res.render('userLogin', templateVars);
 })
 //post user login
-//Handle post to login to set cookie
+//Handle post to login ansd set cookie
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
