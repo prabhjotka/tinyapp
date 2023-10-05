@@ -76,27 +76,41 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: user1,
 
-  };
-  res.render("urls_new", templateVars);
+  };//const name = person ? person.name : "stranger";
+  user1 ? res.render("urls_new", templateVars) : res.redirect('/login')
+
 });
 //showing a short url version for longUrl
 app.get("/urls/:id", (req, res) => {
+  const userId = req.cookies.user_id;
+  const urlid = req.params.id;
+  if (!userId) {
+    return res.redirect('/login');
+  }
+  const user = users[userId];
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    user,
+  };
+  res.render("urls_show", templateVars);
+  if (!urlDatabase[urlid]) {
+
+    return res.status(404).send(`<h1>Shortened URL Not Found</h1>`);
+  }
+
+});
+//post for urls//adding to urldatabase
+app.post("/urls", (req, res) => {
   const userId = req.cookies.user_id;
   let user1 = "";
   if (userId || users[userId]) {
 
     user1 = users[userId];
   }
-
-  const templateVars = {
-    id: req.params.id, longURL:
-      urlDatabase[req.params.id],
-    user: user1,
-  };
-  res.render("urls_show", templateVars);
-});
-//adding to urldatabase
-app.post("/urls", (req, res) => {
+  if (!user1) {
+    res.send('<h2>User must login before create  a url </h2>')
+  }
   const longURL1 = req.body.longURL;
   const shortUrl = generateRandomString(6);
   urlDatabase[shortUrl] = longURL1;
@@ -104,13 +118,21 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortUrl}`);
 
 });
-// get property for to follow the  link when user click on short url
+// get property  to follow the  link when user click on short url
 app.get("/u/:id", (req, res) => {
-  const templateVars = {
-    id: req.params.id, longURL:
-      urlDatabase[req.params.id]
-  };
-  res.redirect(templateVars.longURL);
+  const urlid = req.params.id;
+  if (urlDatabase[urlid]) {
+    const templateVars = {
+      id: req.params.id,
+      longURL: urlDatabase[req.params.id]
+    };
+
+    res.redirect(templateVars.longURL);
+  }
+  else {
+    res.status(404).send(`<h1>Shortened URL Not Found</h1>`);
+  }
+
 });
 
 //delete the url
