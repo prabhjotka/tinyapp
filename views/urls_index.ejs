@@ -33,17 +33,21 @@
           </tr>
         </thead>
         <tbody>
-          <% for (let id in urls) { %>
+          
             <tr>
-              <td><%= id %></td>
-              <td><%= urls[id] %></td>
-             
-               <td><a href="/urls/<%= id %>" style="border-width: 0cqi;border-color: blue;"> Edit</a> </td> 
-              <td><form method="POST" action="/urls/<%= id %>/delete"> 
+              <ul>
+                <% urls.shortUrls.forEach((shortUrl, index) => { %>
+                <td>
+                    Short URL: <a href="<%= shortUrl %>"><%= shortUrl %></a>
+                    <br></td>
+                  <td>  Long URL: <a href="<%= urls.longUrls[index] %>"><%= urls.longUrls[index] %></a>
+                  </td>
+               <td><a href="/urls/<%= urls.shortUrls[index] %>" style="border-width: 0cqi;border-color: blue;"> Edit</a> </td> 
+              <td><form method="POST" action="/urls/<%= urls.shortUrls[index] %>/delete"> 
                 <button type="submit"  style =color:red;border-color:red>Delete</button></form></td>
             </tr>
-            <% } %>
-         
+           
+            <% }); %>
         </tbody>
       </table>
     </main>

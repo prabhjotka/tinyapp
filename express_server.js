@@ -6,18 +6,6 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
-//function to generate random id's
-function generateRandomString(length) {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    result += characters.charAt(randomIndex);
-  }
-
-  return result;
-}
 //creating user object database
 const users = {
   userRandomID: {
@@ -31,6 +19,30 @@ const users = {
     password: "6789",
   },
 }
+//creating url database object
+const urlDatabase = {
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "userRandomID",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "user2RandomID",
+  },
+};
+
+//function to generate random id's
+function generateRandomString(length) {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+
+  for (let i = 0; i < length; i++) {
+    const randomIndex = Math.floor(Math.random() * characters.length);
+    result += characters.charAt(randomIndex);
+  }
+
+  return result;
+}
 //function to get user by email
 const getUserByEmail = ((email) => {
   let founduser = null;
@@ -43,25 +55,45 @@ const getUserByEmail = ((email) => {
   }
   return founduser;
 });
-//creating url database object
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-};
+//function to get url for specific user
+const urlsForUser = ((userid) => {
+  const userUrls = {
+    shortUrls: [],
+    longUrls: [],
+  };
+
+  for (let shortURL in urlDatabase) {
+    const urlData = urlDatabase[shortURL];
+    if (urlData.userID === userid) {
+      userUrls.shortUrls.push(shortURL);
+      userUrls.longUrls.push(urlData.longURL);
+    }
+  }
+
+  return userUrls;
+});
+
 app.use(express.urlencoded({ extended: true }));
 //get/url
 app.get("/urls", (req, res) => {
+  let shorturls = [];
   const userId = req.cookies.user_id;
+  if (!userId) {
+    return res.redirect('/login');
+  }
+  const userUrls = urlsForUser(userId)
+  console.log("user url is", userUrls);
+
   let user1 = "";
   if (userId || users[userId]) {
 
     user1 = users[userId];
   }
-  const templateVars = {
-    urls: urlDatabase,
-    user: user1,
 
-  };
+  const templateVars = {
+    user: user1,
+    urls: userUrls
+  }
   res.render("urls_index", templateVars);
 });
 //creating a newUrl page
@@ -76,6 +108,7 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: user1,
 
+
   };//const name = person ? person.name : "stranger";
   user1 ? res.render("urls_new", templateVars) : res.redirect('/login')
 
@@ -89,8 +122,8 @@ app.get("/urls/:id", (req, res) => {
   }
   const user = users[userId];
   const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    id: req.params.id,  //urlDatabase[id].longUrl
+    longURL: urlDatabase[req.params.id].longURL,    //change long url
     user,
   };
   res.render("urls_show", templateVars);
@@ -113,8 +146,13 @@ app.post("/urls", (req, res) => {
   }
   const longURL1 = req.body.longURL;
   const shortUrl = generateRandomString(6);
-  urlDatabase[shortUrl] = longURL1;
+  // = generateRandomString(6);
 
+  urlDatabase[shortUrl] = {
+    longURL: longURL1,
+    userID: userId
+  };
+  console.log(urlDatabase);
   res.redirect(`/urls/${shortUrl}`);
 
 });
@@ -124,7 +162,7 @@ app.get("/u/:id", (req, res) => {
   if (urlDatabase[urlid]) {
     const templateVars = {
       id: req.params.id,
-      longURL: urlDatabase[req.params.id]
+      longURL: urlDatabase[req.params.id].longURL  //change longurl
     };
 
     res.redirect(templateVars.longURL);
@@ -144,8 +182,8 @@ app.post('/urls/:id/delete', (req, res) => {
 //edit the url
 app.get("/urls", (req, res) => {
   const templateVars = {
-    id: req.params.id, longURL:
-      urlDatabase[req.params.id]
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id].longURL  //chnage long url
   };
   res.render("urls_show", templateVars);
 });
