@@ -1,8 +1,7 @@
 const express = require("express");
 let morgan = require('morgan');
 const bcrypt = require("bcryptjs");
-var cookieSession = require('cookie-session')
-//const helperfunction = require('./helpers')
+const cookieSession = require('cookie-session');
 const { getUserByEmail } = require('./helpers.js');
 const app = express();
 app.use(morgan('dev'));
@@ -11,7 +10,7 @@ app.use(cookieSession({
   name: 'user',
   keys: ['xdgfhfghfgdfgfdgfdg'],
 }))
-const PORT = 8080; // default port 8080
+const PORT = 8080;    // default port 8080
 app.set("view engine", "ejs");
 //creating user object database
 const users = {};
@@ -50,7 +49,7 @@ const urlsForUser = ((userid) => {
 app.get("/urls", (req, res) => {
   const userId = req.session.user_id;
   if (!userId) {
-    return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
+    return res.status(401).send(`<html><h2>Please login get access to url <h2><html>`);
   }
   const userUrls = urlsForUser(userId);
   let user1 = "";
@@ -82,7 +81,6 @@ app.post("/urls", (req, res) => {
     longURL: longURL1,
     userID: userId
   };
-  //console.log(urlDatabase);
   res.redirect(`/urls/${shortUrl}`);
 
 });
@@ -91,7 +89,7 @@ app.post("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userId = req.session.user_id;
   if (!userId) {
-    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    return res.status(401).send(`<html><h2>Please login get access to url <h2><html>`);
   }
   let user1 = "";
   if (userId || users[userId]) {
@@ -112,7 +110,7 @@ app.get("/urls/:id", (req, res) => {
 
   const urlid = req.params.id;
   if (!userId) {
-    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
     //return res.redirect('/login');
   }
   const user = users[userId];
@@ -150,7 +148,7 @@ app.get("/u/:id", (req, res) => {
 app.post('/urls/:id', (req, res) => {
   const userId = req.session.user_id;
   if (!userId) {
-    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    return res.status(401).send(`<html><h2>Please login get access to url <h2><html>`);
     //return res.redirect('/login');
   }
   urlDatabase[req.params.id].longURL = req.body.newUrl;
@@ -163,7 +161,7 @@ app.post('/urls/:id', (req, res) => {
 app.post('/urls/:id/delete', (req, res) => {
   const userId = req.session.user_id;
   if (!userId) {
-    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
     //return res.redirect('/login');
   }
   delete urlDatabase[req.params.id];
@@ -173,7 +171,7 @@ app.post('/urls/:id/delete', (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const userId = req.session.user_id
   if (!userId) {
-    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
     //return res.redirect('/login');
   }
   const templateVars = {
@@ -209,11 +207,11 @@ app.post('/register', (req, res) => {
   const userEmail = req.body.email;
   const userPassword = req.body.password;
   if (!userEmail || !userPassword) {
-    return res.status(400).send("Please enter email and password!");
+    return res.status(400).send(`<html><h2>Please enter email and password!<h2></html>`);
   }
   const founduser = getUserByEmail(userEmail, users);
   if (founduser !== null) {
-    return res.status(400).send("User already exist");
+    return res.status(400).send(`<html><h2>User already exist<h2></html>`);
 
   }
   const userid = generateRandomString(8);
@@ -224,8 +222,6 @@ app.post('/register', (req, res) => {
     password: hashedPassword
   }
   req.session.user_id = userid;
-  //res.cookie('user_id', userid);
-  console.log(users);// for debugging
   res.redirect('/urls');
 
 });

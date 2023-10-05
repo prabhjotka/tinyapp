@@ -38,7 +38,7 @@
               <ul>
                 <% urls.shortUrls.forEach((shortUrl, index) => { %>
                 <td>
-                    Short URL: <%= shortUrl %></a>
+                    Short URL ID: <a href="/u/<%= shortUrl %>"><%= shortUrl %></a>
                     <br></td>
                   <td>  Long URL: <a href="<%= urls.longUrls[index] %>"><%= urls.longUrls[index] %></a>
                   </td>
