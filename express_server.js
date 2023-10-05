@@ -2,6 +2,8 @@ const express = require("express");
 let morgan = require('morgan');
 const bcrypt = require("bcryptjs");
 var cookieSession = require('cookie-session')
+//const helperfunction = require('./helpers')
+const { getUserByEmail } = require('./helpers.js');
 const app = express();
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
@@ -28,18 +30,6 @@ function generateRandomString(length) {
 
   return result;
 }
-//function to get user by email
-const getUserByEmail = ((email) => {
-  let founduser = null;
-
-  for (let userid in users) {
-    const user = users[userid];
-    if (email === user.email) {
-      founduser = user;
-    }
-  }
-  return founduser;
-});
 //function to get urls for specific user logged in
 const urlsForUser = ((userid) => {
   const userUrls = {
@@ -58,12 +48,8 @@ const urlsForUser = ((userid) => {
 
 //get/urls
 app.get("/urls", (req, res) => {
-  //let shorturls = [];
   const userId = req.session.user_id;
   if (!userId) {
-    // const errMessage = "Please login get access to url";
-    // res.render('/login', { errMessage });
-    // return;
     return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
   }
   const userUrls = urlsForUser(userId);
@@ -225,7 +211,7 @@ app.post('/register', (req, res) => {
   if (!userEmail || !userPassword) {
     return res.status(400).send("Please enter email and password!");
   }
-  const founduser = getUserByEmail(userEmail);
+  const founduser = getUserByEmail(userEmail, users);
   if (founduser !== null) {
     return res.status(400).send("User already exist");
 
@@ -261,24 +247,20 @@ app.get('/login', (req, res) => {
 //Handle post to login to set cookie
 app.post("/login", (req, res) => {
   const email = req.body.email;
-  const founduser = getUserByEmail(email);
-
-  console.log("found user is", founduser);//debugging
+  const password = req.body.password;
+  const founduser = getUserByEmail(email, users);
   if (founduser === null) {
-    res.status(403).send("Credentials does not match");
+    return res.status(403).send("Credentials does not matc#########h");
   }
-  else if (founduser !== null) {
-    const result = bcrypt.compareSync(founduser.password, req.body.password);
-    if (!result) {
+  const result = bcrypt.compareSync(password, founduser.password);
 
-      res.status(403).send("Credentials does not match");
-    }
+  if (!result) {
+    return res.status(403).send("Credentials does not match");
   }
   const userid = founduser.id;
-
-  //res.cookie('user_id', userid);
   req.session.user_id = userid;
   res.redirect("/urls");
+
 });
 //clear cookies when logout
 app.post("/logout", (req, res) => {
