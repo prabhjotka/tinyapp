@@ -89,7 +89,8 @@ app.post("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userId = req.session.user_id;
   if (!userId) {
-    return res.status(401).send(`<html><h2>Please login get access to url <h2><html>`);
+    //return res.status(401).send(`<html><h2>Please login get access to url <h2><html>`);
+    res.redirect('/login');
   }
   let user1 = "";
   if (userId || users[userId]) {
@@ -113,6 +114,10 @@ app.get("/urls/:id", (req, res) => {
     return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
     //return res.redirect('/login');
   }
+  if (!urlDatabase[urlid]) {
+
+    return res.status(404).send(`<h1>Shortened URL Not Found</h1>`);
+  }
   const user = users[userId];
   const templateVars = {
     id: req.params.id,
@@ -120,10 +125,7 @@ app.get("/urls/:id", (req, res) => {
     user,
   };
   res.render("urls_show", templateVars);
-  if (!urlDatabase[urlid]) {
 
-    return res.status(404).send(`<h1>Shortened URL Not Found</h1>`);
-  }
 
 });
 
