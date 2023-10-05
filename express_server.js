@@ -1,11 +1,14 @@
 const express = require("express");
-let cookieParser = require('cookie-parser');
 let morgan = require('morgan');
 const bcrypt = require("bcryptjs");
+var cookieSession = require('cookie-session')
 const app = express();
-app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieSession({
+  name: 'user',
+  keys: ['xdgfhfghfgdfgfdgfdg'],
+}))
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 //creating user object database
@@ -56,7 +59,7 @@ const urlsForUser = ((userid) => {
 //get/urls
 app.get("/urls", (req, res) => {
   //let shorturls = [];
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   if (!userId) {
     // const errMessage = "Please login get access to url";
     // res.render('/login', { errMessage });
@@ -78,7 +81,7 @@ app.get("/urls", (req, res) => {
 });
 //post for urls//adding to urldatabase
 app.post("/urls", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   let user1 = "";
   if (userId || users[userId]) {
 
@@ -100,15 +103,16 @@ app.post("/urls", (req, res) => {
 
 //get for  newUrl page
 app.get("/urls/new", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
+  if (!userId) {
+    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+  }
   let user1 = "";
   if (userId || users[userId]) {
 
     user1 = users[userId];
   }
-  if (!user1) {
-    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
-  }
+
   const templateVars = {
     user: user1,
   };
@@ -118,7 +122,8 @@ app.get("/urls/new", (req, res) => {
 
 //showing a short url version for longUrl
 app.get("/urls/:id", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
+
   const urlid = req.params.id;
   if (!userId) {
     return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
@@ -157,7 +162,7 @@ app.get("/u/:id", (req, res) => {
 });
 //post for  edit url
 app.post('/urls/:id', (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   if (!userId) {
     return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
     //return res.redirect('/login');
@@ -170,7 +175,7 @@ app.post('/urls/:id', (req, res) => {
 
 //delete the url
 app.post('/urls/:id/delete', (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   if (!userId) {
     return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
     //return res.redirect('/login');
@@ -180,7 +185,7 @@ app.post('/urls/:id/delete', (req, res) => {
 });
 //get for urls:id
 app.get("/urls/:id", (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id
   if (!userId) {
     return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
     //return res.redirect('/login');
@@ -195,15 +200,10 @@ app.get("/urls/:id", (req, res) => {
 });
 
 
-//clear cookies when logout
-app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
 
-  res.redirect("/login");
-});
 //get user registeration form info
 app.get('/register', (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   let user1 = "";
   if (userId || users[userId]) {
 
@@ -237,13 +237,15 @@ app.post('/register', (req, res) => {
     email: userEmail,
     password: hashedPassword
   }
-  res.cookie('user_id', userid);
+  req.session.user_id = userid;
+  //res.cookie('user_id', userid);
+  console.log(users);// for debugging
   res.redirect('/urls');
 
 });
 //get user login
 app.get('/login', (req, res) => {
-  const userId = req.cookies.user_id;
+  const userId = req.session.user_id;
   let user1 = "";
   if (userId || users[userId]) {
 
@@ -260,20 +262,29 @@ app.get('/login', (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const founduser = getUserByEmail(email);
-  console.log("found user is", founduser); //debugging
-  const result = bcrypt.compareSync(founduser.password, req.body.password);
+
+  console.log("found user is", founduser);//debugging
   if (founduser === null) {
     res.status(403).send("Credentials does not match");
   }
-
   else if (founduser !== null) {
+    const result = bcrypt.compareSync(founduser.password, req.body.password);
     if (!result) {
+
       res.status(403).send("Credentials does not match");
     }
   }
   const userid = founduser.id;
-  res.cookie('user_id', userid);
+
+  //res.cookie('user_id', userid);
+  req.session.user_id = userid;
   res.redirect("/urls");
+});
+//clear cookies when logout
+app.post("/logout", (req, res) => {
+  req.session = null;
+
+  res.redirect("/login");
 });
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
