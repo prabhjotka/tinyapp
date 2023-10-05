@@ -4,6 +4,7 @@ let morgan = require('morgan');
 const app = express();
 app.use(cookieParser());
 app.use(morgan('dev'));
+app.use(express.urlencoded({ extended: true }));
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 //creating user object database
@@ -55,7 +56,7 @@ const getUserByEmail = ((email) => {
   }
   return founduser;
 });
-//function to get url for specific user
+//function to get urls for specific user logged in
 const urlsForUser = ((userid) => {
   const userUrls = {
     shortUrls: [],
@@ -68,18 +69,18 @@ const urlsForUser = ((userid) => {
       userUrls.shortUrls.push(shortURL);
       userUrls.longUrls.push(urlData.longURL);
     }
-  }
-
-  return userUrls;
+  } return userUrls;
 });
 
-app.use(express.urlencoded({ extended: true }));
-//get/url
+//get/urls
 app.get("/urls", (req, res) => {
   let shorturls = [];
   const userId = req.cookies.user_id;
   if (!userId) {
-    return res.redirect('/login');
+    // const errMessage = "Please login get access to url";
+    // res.render('/login', { errMessage });
+    // return;
+    return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
   }
   const userUrls = urlsForUser(userId)
   console.log("user url is", userUrls);
@@ -109,7 +110,7 @@ app.get("/urls/new", (req, res) => {
     user: user1,
 
 
-  };//const name = person ? person.name : "stranger";
+  };
   user1 ? res.render("urls_new", templateVars) : res.redirect('/login')
 
 });
@@ -118,12 +119,13 @@ app.get("/urls/:id", (req, res) => {
   const userId = req.cookies.user_id;
   const urlid = req.params.id;
   if (!userId) {
-    return res.redirect('/login');
+    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    //return res.redirect('/login');
   }
   const user = users[userId];
   const templateVars = {
-    id: req.params.id,  //urlDatabase[id].longUrl
-    longURL: urlDatabase[req.params.id].longURL,    //change long url
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id].longURL,
     user,
   };
   res.render("urls_show", templateVars);
@@ -142,12 +144,10 @@ app.post("/urls", (req, res) => {
     user1 = users[userId];
   }
   if (!user1) {
-    res.send('<h2>User must login before create  a url </h2>')
+    return res.send('<h2>User must login before create  a url </h2>')
   }
   const longURL1 = req.body.longURL;
   const shortUrl = generateRandomString(6);
-  // = generateRandomString(6);
-
   urlDatabase[shortUrl] = {
     longURL: longURL1,
     userID: userId
@@ -162,7 +162,7 @@ app.get("/u/:id", (req, res) => {
   if (urlDatabase[urlid]) {
     const templateVars = {
       id: req.params.id,
-      longURL: urlDatabase[req.params.id].longURL  //change longurl
+      longURL: urlDatabase[req.params.id].longURL
     };
 
     res.redirect(templateVars.longURL);
@@ -175,23 +175,35 @@ app.get("/u/:id", (req, res) => {
 
 //delete the url
 app.post('/urls/:id/delete', (req, res) => {
-
+  const userId = req.cookies.user_id;
+  if (!userId) {
+    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    //return res.redirect('/login');
+  }
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 //edit the url
 app.get("/urls", (req, res) => {
+  const userId = req.cookies.user_id;
+  if (!userId) {
+    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    //return res.redirect('/login');
+  }
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL  //chnage long url
+    longURL: urlDatabase[req.params.id].longURL
   };
   res.render("urls_show", templateVars);
 });
 
 //submit new url
 app.post("/urls/:id", (req, res) => {
-
-  //console.log(req.body);  for debugguing purpose
+  const userId = req.cookies.user_id;
+  if (!userId) {
+    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    //return res.redirect('/login');
+  }
   urlDatabase[req.params.id] = req.body.newUrl;
 
   res.redirect("/urls/");
