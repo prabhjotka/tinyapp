@@ -1,6 +1,7 @@
 const express = require("express");
 let cookieParser = require('cookie-parser');
 let morgan = require('morgan');
+const bcrypt = require("bcryptjs");
 const app = express();
 app.use(cookieParser());
 app.use(morgan('dev'));
@@ -8,29 +9,9 @@ app.use(express.urlencoded({ extended: true }));
 const PORT = 8080; // default port 8080
 app.set("view engine", "ejs");
 //creating user object database
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "sam@gmail.com",
-    password: "12345",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "abc@gmail.com",
-    password: "6789",
-  },
-}
+const users = {};
 //creating url database object
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "userRandomID",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "user2RandomID",
-  },
-};
+const urlDatabase = {};
 
 //function to generate random id's
 function generateRandomString(length) {
@@ -74,7 +55,7 @@ const urlsForUser = ((userid) => {
 
 //get/urls
 app.get("/urls", (req, res) => {
-  let shorturls = [];
+  //let shorturls = [];
   const userId = req.cookies.user_id;
   if (!userId) {
     // const errMessage = "Please login get access to url";
@@ -82,9 +63,7 @@ app.get("/urls", (req, res) => {
     // return;
     return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
   }
-  const userUrls = urlsForUser(userId)
-  console.log("user url is", userUrls);
-
+  const userUrls = urlsForUser(userId);
   let user1 = "";
   if (userId || users[userId]) {
 
@@ -97,7 +76,29 @@ app.get("/urls", (req, res) => {
   }
   res.render("urls_index", templateVars);
 });
-//creating a newUrl page
+//post for urls//adding to urldatabase
+app.post("/urls", (req, res) => {
+  const userId = req.cookies.user_id;
+  let user1 = "";
+  if (userId || users[userId]) {
+
+    user1 = users[userId];
+  }
+  if (!user1) {
+    return res.send('<h2>User must login before create  a url </h2>')
+  }
+  const longURL1 = req.body.longURL;
+  const shortUrl = generateRandomString(6);
+  urlDatabase[shortUrl] = {
+    longURL: longURL1,
+    userID: userId
+  };
+  //console.log(urlDatabase);
+  res.redirect(`/urls/${shortUrl}`);
+
+});
+
+//get for  newUrl page
 app.get("/urls/new", (req, res) => {
   const userId = req.cookies.user_id;
   let user1 = "";
@@ -105,15 +106,16 @@ app.get("/urls/new", (req, res) => {
 
     user1 = users[userId];
   }
-
+  if (!user1) {
+    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+  }
   const templateVars = {
     user: user1,
-
-
   };
-  user1 ? res.render("urls_new", templateVars) : res.redirect('/login')
+  res.render("urls_new", templateVars);
 
 });
+
 //showing a short url version for longUrl
 app.get("/urls/:id", (req, res) => {
   const userId = req.cookies.user_id;
@@ -135,27 +137,8 @@ app.get("/urls/:id", (req, res) => {
   }
 
 });
-//post for urls//adding to urldatabase
-app.post("/urls", (req, res) => {
-  const userId = req.cookies.user_id;
-  let user1 = "";
-  if (userId || users[userId]) {
 
-    user1 = users[userId];
-  }
-  if (!user1) {
-    return res.send('<h2>User must login before create  a url </h2>')
-  }
-  const longURL1 = req.body.longURL;
-  const shortUrl = generateRandomString(6);
-  urlDatabase[shortUrl] = {
-    longURL: longURL1,
-    userID: userId
-  };
-  console.log(urlDatabase);
-  res.redirect(`/urls/${shortUrl}`);
 
-});
 // get property  to follow the  link when user click on short url
 app.get("/u/:id", (req, res) => {
   const urlid = req.params.id;
@@ -172,6 +155,18 @@ app.get("/u/:id", (req, res) => {
   }
 
 });
+//post for  edit url
+app.post('/urls/:id', (req, res) => {
+  const userId = req.cookies.user_id;
+  if (!userId) {
+    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
+    //return res.redirect('/login');
+  }
+  urlDatabase[req.params.id].longURL = req.body.newUrl;
+  res.redirect("/urls/");
+
+});
+
 
 //delete the url
 app.post('/urls/:id/delete', (req, res) => {
@@ -183,8 +178,8 @@ app.post('/urls/:id/delete', (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
-//edit the url
-app.get("/urls", (req, res) => {
+//get for urls:id
+app.get("/urls/:id", (req, res) => {
   const userId = req.cookies.user_id;
   if (!userId) {
     return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
@@ -192,23 +187,13 @@ app.get("/urls", (req, res) => {
   }
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL
+    // longURL: urlDatabase[req.params.id].longURL
+
+    longURL: urlDatabase[req.params.id],
   };
   res.render("urls_show", templateVars);
 });
 
-//submit new url
-app.post("/urls/:id", (req, res) => {
-  const userId = req.cookies.user_id;
-  if (!userId) {
-    return res.status(401).send(`<html><h2>Please login get access to ur<h2><html>`);
-    //return res.redirect('/login');
-  }
-  urlDatabase[req.params.id] = req.body.newUrl;
-
-  res.redirect("/urls/");
-
-});
 
 //clear cookies when logout
 app.post("/logout", (req, res) => {
@@ -246,11 +231,11 @@ app.post('/register', (req, res) => {
 
   }
   const userid = generateRandomString(8);
-
+  const hashedPassword = bcrypt.hashSync(userPassword, 10);
   users[userid] = {
     id: userid,
     email: userEmail,
-    password: userPassword
+    password: hashedPassword
   }
   res.cookie('user_id', userid);
   res.redirect('/urls');
@@ -275,12 +260,14 @@ app.get('/login', (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const founduser = getUserByEmail(email);
-  console.log("found user is", founduser);
+  console.log("found user is", founduser); //debugging
+  const result = bcrypt.compareSync(founduser.password, req.body.password);
   if (founduser === null) {
     res.status(403).send("Credentials does not match");
   }
+
   else if (founduser !== null) {
-    if (founduser.password !== req.body.password) {
+    if (!result) {
       res.status(403).send("Credentials does not match");
     }
   }
