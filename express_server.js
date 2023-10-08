@@ -39,11 +39,14 @@ const urlsForUser = ((userid) => {
   for (let shortURL in urlDatabase) {
     const urlData = urlDatabase[shortURL];
     if (urlData.userID === userid) {
+
       userUrls.shortUrls.push(shortURL);
       userUrls.longUrls.push(urlData.longURL);
     }
-  } return userUrls;
+  }
+  return userUrls;
 });
+
 
 //get/urls
 app.get("/urls", (req, res) => {
@@ -84,23 +87,19 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortUrl}`);
 
 });
+
 //get / 
 app.get("/", (req, res) => {
   const userId = req.session.user_id;
-  if (!userId) {
-    //return res.status(401).send(`<html><h2>Please login get access to url <h2><html>`);
-    res.redirect('/login');
-  }
   let user1 = "";
   if (userId || users[userId]) {
 
     user1 = users[userId];
   }
-
-  const templateVars = {
-    user: user1,
-  };
-  res.render("/urls", templateVars);
+  if (!user1) {
+    return res.redirect('/login');
+  }
+  return res.redirect('/urls');
 
 });
 
@@ -127,15 +126,14 @@ app.get("/urls/new", (req, res) => {
 //showing a short url version for longUrl
 app.get("/urls/:id", (req, res) => {
   const userId = req.session.user_id;
-
   const urlid = req.params.id;
   if (!userId) {
     return res.status(401).send(`<html><h2>Please login get access to url<h2><html>`);
     //return res.redirect('/login');
   }
-  if (!urlDatabase[urlid]) {
-
-    return res.status(404).send(`<h1>Shortened URL Not Found</h1>`);
+  const userUrls = urlsForUser(userId);
+  if (!userUrls.shortUrls.includes(urlid)) {
+    return res.status(401).send(`<html><h2>Url Does not belong to user<h2><html>`);
   }
   const user = users[userId];
   const templateVars = {
@@ -143,6 +141,7 @@ app.get("/urls/:id", (req, res) => {
     longURL: urlDatabase[req.params.id].longURL,
     user,
   };
+
   res.render("urls_show", templateVars);
 
 });
