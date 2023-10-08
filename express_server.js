@@ -84,6 +84,25 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortUrl}`);
 
 });
+//get / 
+app.get("/", (req, res) => {
+  const userId = req.session.user_id;
+  if (!userId) {
+    //return res.status(401).send(`<html><h2>Please login get access to url <h2><html>`);
+    res.redirect('/login');
+  }
+  let user1 = "";
+  if (userId || users[userId]) {
+
+    user1 = users[userId];
+  }
+
+  const templateVars = {
+    user: user1,
+  };
+  res.render("/urls", templateVars);
+
+});
 
 //get for  newUrl page
 app.get("/urls/new", (req, res) => {
